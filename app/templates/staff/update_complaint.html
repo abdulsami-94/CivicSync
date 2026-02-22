@@ -34,6 +34,7 @@
             </div>
             <div class="card-body">
                 <form method="POST" action="">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                     <div class="mb-3">
                         <label for="status" class="form-label">Current Status</label>
                         <select class="form-select" id="status" name="status" required>

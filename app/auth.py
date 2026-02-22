@@ -1,9 +1,32 @@
+from datetime import datetime, timedelta
 from flask import Blueprint, render_template, url_for, flash, redirect, request
 from app import db, bcrypt
-from app.models import User
+from app.models import User, Complaint, ComplaintHistory
 from flask_login import login_user, current_user, logout_user, login_required
 
 auth = Blueprint('auth', __name__)
+
+def check_escalations():
+    """Utility function to auto-escalate complaints older than 3 days that are not resolved."""
+    three_days_ago = datetime.utcnow() - timedelta(days=3)
+    
+    # Exclude Resolved and already Escalated
+    pending_complaints = Complaint.query.filter(
+        Complaint.status.not_in(['Resolved', 'Escalated']),
+        Complaint.date_posted <= three_days_ago
+    ).all()
+    
+    if not pending_complaints:
+        return
+
+    for c in pending_complaints:
+        old_status = c.status
+        c.status = 'Escalated'
+        history = ComplaintHistory(complaint_id=c.id, old_status=old_status, 
+                                   new_status='Escalated', notes='System auto-escalation (> 3 days).', 
+                                   changed_by=None) # System change
+        db.session.add(history)
+    db.session.commit()
 
 @auth.route("/register", methods=['GET', 'POST'])
 def register():
@@ -44,6 +67,7 @@ def login():
         user = User.query.filter_by(email=email).first()
         if user and bcrypt.check_password_hash(user.password, password):
             login_user(user, remember=request.form.get('remember'))
+            check_escalations() # Run escalation logic on every login
             next_page = request.args.get('next')
             if next_page:
                 return redirect(next_page)

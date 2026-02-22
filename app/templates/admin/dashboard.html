@@ -77,6 +77,45 @@
     </div>
 </div>
 
+<!-- Performance Report -->
+<div class="card shadow-sm mb-4 border-success">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0">Staff Performance Report</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Staff Member</th>
+                        <th>Complaints Resolved</th>
+                        <th>Avg. Resolution Time (Days)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in performance_data %}
+                    <tr>
+                        <td><strong>{{ row.username }}</strong></td>
+                        <td>{{ row.resolved_count }}</td>
+                        <td>
+                            {% if row.avg_days is not none %}
+                            {{ "%.1f"|format(row.avg_days) }} Days
+                            {% else %}
+                            N/A
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="text-center text-muted py-3">No performance data available yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <!-- All Complaints Table -->
 <div class="card shadow-sm">
     <div class="card-header bg-primary text-white">
@@ -136,6 +175,7 @@
                                         </div>
                                         <form method="POST"
                                             action="{{ url_for('admin.assign_staff', complaint_id=complaint.id) }}">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                                             <div class="modal-body">
                                                 <p><strong>Title:</strong> {{ complaint.title }}</p>
                                                 <div class="mb-3">

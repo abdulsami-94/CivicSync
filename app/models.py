@@ -21,16 +21,24 @@ class User(db.Model, UserMixin):
 class Complaint(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
-    category = db.Column(db.String(50), nullable=False) # e.g. Roads, Water, Electricity, Sanitation
+    category = db.Column(db.String(50), nullable=False, index=True) # e.g. Roads, Water, Electricity, Sanitation
     description = db.Column(db.Text, nullable=False)
     priority = db.Column(db.String(20), nullable=False, default='Low') # Low, Medium, High
     location = db.Column(db.String(100), nullable=False)
     image_file = db.Column(db.String(100), nullable=True) # Assuming file path is stored here
-    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    status = db.Column(db.String(20), nullable=False, default='Pending') # Pending, Assigned, In Progress, Resolved, Escalated
+    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+    status = db.Column(db.String(20), nullable=False, default='Pending', index=True) # Pending, Assigned, In Progress, Resolved, Escalated
+    resolved_at = db.Column(db.DateTime, nullable=True) # Track when resolved
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     assigned_to = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # Staff ID
     history = db.relationship('ComplaintHistory', backref='complaint', lazy=True, cascade='all, delete-orphan')
+
+    @property
+    def resolution_time_days(self):
+        if self.resolved_at and self.date_posted:
+            delta = self.resolved_at - self.date_posted
+            return delta.days
+        return None
 
     def __repr__(self):
         return f"Complaint('{self.title}', '{self.date_posted}', '{self.status}')"

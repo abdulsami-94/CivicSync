@@ -16,30 +16,10 @@ def staff_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def check_escalations():
-    """Utility function to auto-escalate complaints older than 3 days that are not resolved."""
-    three_days_ago = datetime.utcnow() - timedelta(days=3)
-    
-    # Exclude Resolved and already Escalated
-    pending_complaints = Complaint.query.filter(
-        Complaint.status.not_in(['Resolved', 'Escalated']),
-        Complaint.date_posted <= three_days_ago
-    ).all()
-    
-    for c in pending_complaints:
-        old_status = c.status
-        c.status = 'Escalated'
-        history = ComplaintHistory(complaint_id=c.id, old_status=old_status, 
-                                   new_status='Escalated', notes='System auto-escalation (> 3 days).', 
-                                   changed_by=None) # System change
-        db.session.add(history)
-    db.session.commit()
-
 @staff.route("/")
 @staff.route("/dashboard")
 @staff_required
 def dashboard():
-    check_escalations()
     # View assigned complaints
     complaints = Complaint.query.filter_by(assignee=current_user).order_by(Complaint.date_posted.desc()).all()
     return render_template('staff/dashboard.html', title='Staff Tasks', complaints=complaints)
@@ -59,6 +39,10 @@ def update_complaint(complaint_id):
         if new_status and new_status != complaint.status:
             old_status = complaint.status
             complaint.status = new_status
+            
+            # Automatically set resolved_at timestamp when status becomes Resolved
+            if new_status == 'Resolved':
+                complaint.resolved_at = datetime.utcnow()
             
             history = ComplaintHistory(complaint_id=complaint.id, old_status=old_status, 
                                        new_status=new_status, notes=notes, 

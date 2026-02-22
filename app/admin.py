@@ -47,11 +47,28 @@ def dashboard():
     status_counts = db.session.query(Complaint.status, func.count(Complaint.id)).group_by(Complaint.status).all()
     statuses = [row[0] for row in status_counts]
     stat_counts = [row[1] for row in status_counts]
+    
+    # 3. Staff Performance Report
+    # Query: For complaints with a resolved_at timestamp, calculate count and avg difference
+    # We use SQLite compatible timestamp difference: (julianday(resolved_at) - julianday(date_posted))
+    performance_data = db.session.query(
+        User.username,
+        func.count(Complaint.id).label('resolved_count'),
+        func.avg(
+            db.cast(
+                func.julianday(Complaint.resolved_at) - func.julianday(Complaint.date_posted),
+                db.Float
+            )
+        ).label('avg_days')
+    ).join(Complaint, User.id == Complaint.assigned_to)\
+     .filter(Complaint.status == 'Resolved', Complaint.resolved_at.isnot(None))\
+     .group_by(User.id).all()
 
     return render_template('admin/dashboard.html', title='Admin Dashboard', 
                            complaints=complaints, staff_members=staff_members,
                            categories=categories, cat_counts=cat_counts,
-                           statuses=statuses, stat_counts=stat_counts)
+                           statuses=statuses, stat_counts=stat_counts,
+                           performance_data=performance_data)
 
 @admin.route("/assign/<int:complaint_id>", methods=['POST'])
 @admin_required

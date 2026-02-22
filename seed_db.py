@@ -65,6 +65,9 @@ with app.app_context():
         # Assign staff if in progress or resolved
         if status in ['In Progress', 'Resolved']:
             complaint.assigned_to = random.choice([staff1, staff2]).id
+            
+        if status == 'Resolved':
+            complaint.resolved_at = date_posted + timedelta(days=random.randint(1, 4))
 
         db.session.add(complaint)
         db.session.commit()
