@@ -77,15 +77,19 @@ def assign_staff(complaint_id):
     staff_id = request.form.get('staff_id')
     
     if staff_id:
-        complaint.assigned_to = int(staff_id)
-        
+        staff_user = User.query.get(int(staff_id))
+        if not staff_user or staff_user.role != 'staff':
+            flash('Invalid staff selected.', 'danger')
+            return redirect(url_for('admin.dashboard'))
+
+        complaint.assigned_to = staff_user.id
         old_status = complaint.status
         complaint.status = 'In Progress' # Usually assignment means it's now in progress
-        
+
         history = ComplaintHistory(complaint_id=complaint.id, old_status=old_status, 
-                                   new_status='In Progress', notes=f'Assigned to staff ID {staff_id}', 
+                                   new_status='In Progress', notes=f'Assigned to staff {staff_user.username}', 
                                    changed_by=current_user.id)
-        
+
         db.session.add(history)
         db.session.commit()
         flash('Complaint assigned successfully!', 'success')

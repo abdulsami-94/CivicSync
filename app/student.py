@@ -8,11 +8,19 @@ from werkzeug.utils import secure_filename
 
 student = Blueprint('student', __name__)
 
+def _allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in current_app.config.get('ALLOWED_EXTENSIONS', set())
+
 def save_picture(form_picture):
+    filename = secure_filename(form_picture.filename)
+    if filename == '' or not _allowed_file(filename):
+        return None
     random_hex = secrets.token_hex(8)
-    _, f_ext = os.path.splitext(form_picture.filename)
+    _, f_ext = os.path.splitext(filename)
     picture_fn = random_hex + f_ext
-    picture_path = os.path.join(current_app.config['UPLOAD_FOLDER'], picture_fn)
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    os.makedirs(upload_folder, exist_ok=True)
+    picture_path = os.path.join(upload_folder, picture_fn)
     form_picture.save(picture_path)
     return picture_fn
 
@@ -22,7 +30,7 @@ def save_picture(form_picture):
 def dashboard():
     if current_user.role != 'student':
         return redirect(url_for('auth.login'))
-    complaints = Complaint.query.filter_by(author=current_user).order_by(Complaint.date_posted.desc()).all()
+    complaints = Complaint.query.filter(Complaint.user_id == current_user.id).order_by(Complaint.date_posted.desc()).all()
     return render_template('student/dashboard.html', title='My Complaints', complaints=complaints)
 
 @student.route("/complaint/new", methods=['GET', 'POST'])

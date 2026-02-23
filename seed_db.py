@@ -27,11 +27,11 @@ with app.app_context():
     staff1 = User(username='tech_support', email='it.support@campus.edu', password=staff_pw, role='staff')
     staff2 = User(username='estate_office', email='maintenance@campus.edu', password=staff_pw, role='staff')
 
-    citizen_pw = bcrypt.generate_password_hash('Student@2026').decode('utf-8')
-    citizen1 = User(username='student_alice', email='alice.cs@student.campus.edu', password=citizen_pw, role='citizen')
-    citizen2 = User(username='student_bob', email='bob.ee@student.campus.edu', password=citizen_pw, role='citizen')
+    student_pw = bcrypt.generate_password_hash('Student@2026').decode('utf-8')
+    student1 = User(username='student_alice', email='alice.cs@student.campus.edu', password=student_pw, role='student')
+    student2 = User(username='student_bob', email='bob.ee@student.campus.edu', password=student_pw, role='student')
 
-    db.session.add_all([admin_user, staff1, staff2, citizen1, citizen2])
+    db.session.add_all([admin_user, staff1, staff2, student1, student2])
     db.session.commit()
-    print("Created sample users (Admin, Staff, Citizens).")
+    print("Created sample users (Admin, Staff, Students).")
     print("Database seeding completed successfully.")

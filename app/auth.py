@@ -12,7 +12,7 @@ def check_escalations():
     
     # Exclude Resolved and already Escalated
     pending_complaints = Complaint.query.filter(
-        Complaint.status.not_in(['Resolved', 'Escalated']),
+        ~Complaint.status.in_(['Resolved', 'Escalated']),
         Complaint.date_posted <= three_days_ago
     ).all()
     
@@ -66,7 +66,8 @@ def login():
         password = request.form.get('password')
         user = User.query.filter_by(email=email).first()
         if user and bcrypt.check_password_hash(user.password, password):
-            login_user(user, remember=request.form.get('remember'))
+            remember_val = bool(request.form.get('remember'))
+            login_user(user, remember=remember_val)
             check_escalations() # Run escalation logic on every login
             next_page = request.args.get('next')
             if next_page:

@@ -21,14 +21,14 @@ def staff_required(f):
 @staff_required
 def dashboard():
     # View assigned complaints
-    complaints = Complaint.query.filter_by(assignee=current_user).order_by(Complaint.date_posted.desc()).all()
+    complaints = Complaint.query.filter(Complaint.assigned_to == current_user.id).order_by(Complaint.date_posted.desc()).all()
     return render_template('staff/dashboard.html', title='Staff Tasks', complaints=complaints)
 
 @staff.route("/update/<int:complaint_id>", methods=['GET', 'POST'])
 @staff_required
 def update_complaint(complaint_id):
     complaint = Complaint.query.get_or_404(complaint_id)
-    if complaint.assignee != current_user:
+    if complaint.assigned_to != current_user.id:
         flash('You can only update complaints assigned to you.', 'danger')
         return redirect(url_for('staff.dashboard'))
 
