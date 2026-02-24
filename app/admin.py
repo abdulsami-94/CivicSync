@@ -45,8 +45,8 @@ def dashboard():
     complaints = query.order_by(Complaint.date_posted.desc()).paginate(page=page, per_page=per_page, error_out=False)
     pagination = Pagination(page=page, total=complaints.total, per_page=per_page, css_framework='bootstrap5')
 
-    # Get staff members for assignment dropdown
-    staff_members = User.query.filter_by(role='staff').all()
+    # Get staff members for assignment dropdown - filter to asmedu.org only
+    staff_members = User.query.filter_by(role='staff').filter(User.email.endswith('@asmedu.org')).all()
 
     # Analytics - Status breakdown
     total_complaints = Complaint.query.filter(Complaint.is_deleted == False).count()
@@ -96,10 +96,6 @@ def assign_staff(complaint_id):
         staff_user = User.query.get(int(staff_id))
         if not staff_user or staff_user.role != 'staff':
             flash('Invalid staff selected.', 'danger')
-            return redirect(url_for('admin.dashboard'))
-
-        if complaint.assigned_to:
-            flash('Complaint is already assigned.', 'danger')
             return redirect(url_for('admin.dashboard'))
 
         complaint.assigned_to = staff_user.id

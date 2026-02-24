@@ -217,7 +217,11 @@
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                    <a href="{{ url_for('admin.delete_complaint', complaint_id=complaint.id) }}" class="btn btn-danger">Delete</a>
+                                    <form method="POST" action="{{ url_for('admin.delete_complaint', complaint_id=complaint.id) }}" style="display:inline;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                                        <input type="hidden" name="confirm" value="yes" />
+                                        <button type="submit" class="btn btn-danger">Delete</button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
