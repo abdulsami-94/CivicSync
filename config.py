@@ -15,8 +15,17 @@ class Config:
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
-    # Basic security settings
+    # CSRF Protection
     WTF_CSRF_ENABLED = True
+    WTF_CSRF_TIME_LIMIT = None  # No time limit on CSRF token
+    WTF_CSRF_CHECK_DEFAULT = True
+
+    # Session Configuration - Required for CSRF token validation
+    SESSION_COOKIE_SECURE = False  # Set to True only in production with HTTPS
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    PERMANENT_SESSION_LIFETIME = 86400  # 24 hours
 
     # Email domain restriction for ASM CSIT
     ALLOWED_EMAIL_DOMAIN = 'asmedu.org'
+
