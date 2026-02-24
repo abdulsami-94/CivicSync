@@ -6,8 +6,19 @@ from werkzeug.utils import secure_filename
 from app import db
 from app.models import Complaint
 from flask_paginate import Pagination, get_page_parameter
+from functools import wraps
 
 student = Blueprint('student', __name__)
+
+def student_required(f):
+    """Decorator to ensure only student users can access the route."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or current_user.role != 'student':
+            flash('You do not have permission to access this page.', 'danger')
+            return redirect(url_for('auth.login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 def _allowed_file(filename):
     """Check if file extension is allowed."""
@@ -28,11 +39,8 @@ def save_picture(form_picture):
 
 @student.route("/")
 @student.route("/dashboard")
-@login_required
+@student_required
 def dashboard():
-    """Student dashboard - view their complaints with pagination and search."""
-    if current_user.role != 'student':
-        abort(403)
 
     page = request.args.get(get_page_parameter(), type=int, default=1)
     per_page = 10
@@ -54,11 +62,9 @@ def dashboard():
     return render_template('student/dashboard.html', title='My Complaints', complaints=complaints, pagination=pagination)
 
 @student.route("/complaint/new", methods=['GET', 'POST'])
-@login_required
+@student_required
 def new_complaint():
     """Create a new complaint."""
-    if current_user.role != 'student':
-        abort(403)
 
     if request.method == 'POST':
         title = request.form.get('title')
@@ -87,7 +93,7 @@ def new_complaint():
     return render_template('student/new_complaint.html', title='Register Complaint')
 
 @student.route("/complaint/<int:complaint_id>/edit", methods=['GET', 'POST'])
-@login_required
+@student_required
 def edit_complaint(complaint_id):
     """Edit complaint - only if status is Pending."""
     complaint = Complaint.query.get_or_404(complaint_id)
@@ -116,7 +122,7 @@ def edit_complaint(complaint_id):
     return render_template('student/edit_complaint.html', title='Edit Complaint', complaint=complaint)
 
 @student.route("/complaint/<int:complaint_id>")
-@login_required
+@student_required
 def view_complaint(complaint_id):
     """View complaint details."""
     complaint = Complaint.query.get_or_404(complaint_id)

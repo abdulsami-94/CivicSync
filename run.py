@@ -2,11 +2,11 @@ from app import create_app, db
 
 app = create_app()
 
-if __name__ == '__main__':
-    # Create database tables in development
-    with app.app_context():
-        db.create_all()
-        print('Database tables created.')
+# Create database tables on startup
+with app.app_context():
+    db.create_all()
+    print('Database tables created.')
 
-    # Run the application
+if __name__ == '__main__':
+    # Development server
     app.run(debug=True, port=8000)

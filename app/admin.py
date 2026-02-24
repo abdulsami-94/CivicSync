@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, url_for, flash, redirect, request, abort
+from flask import Blueprint, render_template, url_for, flash, redirect, request, abort, jsonify
 from flask_login import current_user, login_required
 from app import db
 from app.models import Complaint, User
@@ -6,6 +6,7 @@ from functools import wraps
 from sqlalchemy import func
 from flask_paginate import Pagination, get_page_parameter
 from datetime import datetime
+import json
 
 admin = Blueprint('admin', __name__)
 
@@ -47,17 +48,38 @@ def dashboard():
     # Get staff members for assignment dropdown
     staff_members = User.query.filter_by(role='staff').all()
 
-    # Simple analytics
+    # Analytics - Status breakdown
     total_complaints = Complaint.query.filter(Complaint.is_deleted == False).count()
     pending_count = Complaint.query.filter(Complaint.status == 'Pending', Complaint.is_deleted == False).count()
     in_progress_count = Complaint.query.filter(Complaint.status == 'In Progress', Complaint.is_deleted == False).count()
     resolved_count = Complaint.query.filter(Complaint.status == 'Resolved', Complaint.is_deleted == False).count()
 
+    # Analytics - Category breakdown
+    category_data = db.session.query(
+        Complaint.category,
+        func.count(Complaint.id).label('count')
+    ).filter(Complaint.is_deleted == False).group_by(Complaint.category).all()
+
+    # Convert to JSON-safe dict for Chart.js
+    status_counts = {
+        "Pending": pending_count,
+        "In Progress": in_progress_count,
+        "Resolved": resolved_count
+    }
+
+    category_counts = {item[0]: item[1] for item in category_data}
+
+    # Convert to JSON strings for template
+    status_counts_json = json.dumps(status_counts)
+    category_counts_json = json.dumps(category_counts)
+
     return render_template('admin/dashboard.html', title='Admin Dashboard',
                            complaints=complaints, staff_members=staff_members,
                            pagination=pagination, total_complaints=total_complaints,
                            pending_count=pending_count, in_progress_count=in_progress_count,
-                           resolved_count=resolved_count)
+                           resolved_count=resolved_count,
+                           status_counts_json=status_counts_json,
+                           category_counts_json=category_counts_json)
 
 @admin.route("/assign/<int:complaint_id>", methods=['POST'])
 @admin_required

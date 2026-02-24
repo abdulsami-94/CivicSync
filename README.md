@@ -10,6 +10,7 @@ A Flask-based web application for managing student complaints in educational ins
 - **Soft Delete**: Admin can delete complaints without permanent data loss
 - **File Uploads**: Support for complaint evidence attachments
 - **Responsive UI**: Bootstrap-based modern interface
+- **Production Ready**: Includes gunicorn for deployment
 
 ## Technology Stack
 
@@ -18,6 +19,7 @@ A Flask-based web application for managing student complaints in educational ins
 - **Forms**: Flask-WTF with CSRF protection
 - **Frontend**: Bootstrap 5, HTML5
 - **File Handling**: UUID-based secure uploads
+- **WSGI Server**: Gunicorn 22.0.0 (production)
 
 ## Installation & Setup
 
@@ -50,6 +52,29 @@ A Flask-based web application for managing student complaints in educational ins
 5. **Access the application**:
    - Open http://localhost:8000 in your browser
    - Login with demo credentials (see below)
+
+## Deployment
+
+### Local Development
+```bash
+python run.py
+```
+The app runs on http://localhost:8000
+
+### Production Deployment (Gunicorn)
+```bash
+gunicorn run:app
+```
+Or with specific settings:
+```bash
+gunicorn --workers 4 --bind 0.0.0.0:8000 run:app
+```
+
+### Environment Variables for Production
+```bash
+export SECRET_KEY="your-production-secret-key"
+export FLASK_ENV="production"
+```
 
 ## Demo Credentials
 
